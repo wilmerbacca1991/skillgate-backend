@@ -1,6 +1,5 @@
 const passport = require('passport');
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
-const User = require('../models/User');
 
 const configurePassport = () => {
   passport.use(
@@ -11,13 +10,13 @@ const configurePassport = () => {
       },
       async (jwtPayload, done) => {
         try {
-          const user = await User.findById(jwtPayload.userId).select('-password');
-
-          if (!user) {
-            return done(null, false);
-          }
-
-          return done(null, user);
+          return done(null, {
+            _id: jwtPayload.userId,
+            role: jwtPayload.role,
+            firstName: jwtPayload.firstName || '',
+            lastName: jwtPayload.lastName || '',
+            email: jwtPayload.email || ''
+          });
         } catch (error) {
           return done(error, false);
         }

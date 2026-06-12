@@ -4,7 +4,10 @@ const generateAccessToken = (user) => {
 return jwt.sign(
 {
 userId: user._id,
-role: user.role
+role: user.role,
+firstName: user.firstName,
+lastName: user.lastName,
+email: user.email
 },
 process.env.JWT_SECRET,
 {
