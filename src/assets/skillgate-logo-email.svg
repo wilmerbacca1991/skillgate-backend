@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="140" y1="60" x2="1460" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#111B31"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FB923C"/>
+      <stop offset="1" stop-color="#FDBA74"/>
+    </linearGradient>
+    <linearGradient id="iceGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#CBD5E1"/>
+    </linearGradient>
+    <filter id="softShadow" x="0" y="0" width="1600" height="420" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#020617" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#softShadow)">
+    <rect x="16" y="16" width="1568" height="388" rx="54" fill="url(#bgGrad)" stroke="#334155" stroke-width="4"/>
+  </g>
+
+  <g>
+    <rect x="116" y="92" width="232" height="232" rx="72" fill="#0A162B" stroke="#475569" stroke-width="4"/>
+    <rect x="145" y="120" width="174" height="176" rx="52" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.14)" stroke-width="2"/>
+
+    <rect x="190" y="146" width="26" height="128" rx="13" fill="url(#iceGrad)"/>
+    <rect x="248" y="146" width="26" height="128" rx="13" fill="url(#accentGrad)"/>
+    <rect x="212" y="198" width="38" height="16" rx="8" fill="#93C5FD"/>
+  </g>
+
+  <text x="396" y="220" fill="#F8FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="136" font-weight="800" letter-spacing="-2">
+    <tspan>Skill</tspan><tspan fill="url(#accentGrad)">Gate</tspan>
+  </text>
+
+  <text x="401" y="287" fill="#94A3B8" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="6">AI-POWERED HIRING INTELLIGENCE</text>
+</svg>
