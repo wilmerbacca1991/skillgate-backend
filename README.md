@@ -2,6 +2,10 @@
 
 Backend service for SkillGate technical interview platform.
 
+## Status
+
+This backend is still under active development. Some endpoints and workflows are still being refined, and known bugs may still be present while features are finalized.
+
 ## Stack
 
 - Node.js
