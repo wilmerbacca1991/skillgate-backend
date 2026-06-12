@@ -6,6 +6,7 @@ const isEmail = (value) => /.+@.+\..+/.test(String(value || '').trim());
 const normalize = (value) => String(value || '').trim();
 
 let transporter = null;
+let transporterReady = false;
 
 const EMAIL_LOGO_CID = 'skillgate-logo@skillgate.local';
 
@@ -99,6 +100,7 @@ const getSmtpConfig = () => {
     const port = Number(process.env.SMTP_PORT || (secure ? 465 : 587));
 
     return {
+      service: 'gmail',
       host: normalize(process.env.SMTP_HOST || 'smtp.gmail.com'),
       port,
       secure,
@@ -111,6 +113,7 @@ const getSmtpConfig = () => {
   const port = Number(process.env.SMTP_PORT || 587);
 
   return {
+    service: '',
     host,
     port,
     secure: port === 465,
@@ -124,20 +127,56 @@ const getTransporter = () => {
     return transporter;
   }
 
-  const { host, port, secure, user, pass } = getSmtpConfig();
+  const { service, host, port, secure, user, pass } = getSmtpConfig();
 
   if (!host || !user || !pass) {
     return null;
   }
 
-  transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass }
-  });
+  transporter = nodemailer.createTransport(
+    service === 'gmail'
+      ? {
+          service: 'gmail',
+          auth: { user, pass }
+        }
+      : {
+          host,
+          port,
+          secure,
+          auth: { user, pass }
+        }
+  );
 
   return transporter;
+};
+
+const buildFromHeader = () => {
+  const smtpUser = normalize(process.env.SMTP_USER);
+  const configuredFrom = normalize(process.env.SMTP_FROM);
+
+  if (!configuredFrom) {
+    return smtpUser || 'no-reply@skillgate.local';
+  }
+
+  const displayMatch = configuredFrom.match(/^(.*)<([^>]+)>$/);
+  if (!displayMatch) {
+    return smtpUser || configuredFrom;
+  }
+
+  const displayName = displayMatch[1].trim();
+  const configuredEmail = normalize(displayMatch[2]);
+  const fromEmail = smtpUser || configuredEmail || 'no-reply@skillgate.local';
+
+  return displayName ? `${displayName} <${fromEmail}>` : fromEmail;
+};
+
+const verifyTransporter = async (mailer) => {
+  if (!mailer || transporterReady) {
+    return;
+  }
+
+  await mailer.verify();
+  transporterReady = true;
 };
 
 const sendInterviewScheduledEmail = async ({
@@ -157,10 +196,17 @@ const sendInterviewScheduledEmail = async ({
     return { sent: false, reason: 'invalid-recipient' };
   }
 
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@skillgate.local';
+  const from = buildFromHeader();
   const mailer = getTransporter();
   if (!mailer) {
     return { sent: false, reason: 'smtp-not-configured' };
+  }
+
+  try {
+    await verifyTransporter(mailer);
+  } catch (verifyError) {
+    console.error('SMTP verification failed:', verifyError.message);
+    return { sent: false, reason: 'smtp-auth-failed', error: verifyError.message };
   }
 
   const whenText = new Date(scheduledAt).toLocaleString();
@@ -204,14 +250,19 @@ const sendInterviewScheduledEmail = async ({
     </div>
   `;
 
-  await mailer.sendMail({
-    from,
-    to: recipient,
-    subject,
-    text,
-    html,
-    attachments: logoAttachments,
-  });
+  try {
+    await mailer.sendMail({
+      from,
+      to: recipient,
+      subject,
+      text,
+      html,
+      attachments: logoAttachments,
+    });
+  } catch (sendError) {
+    console.error('SMTP send failed:', sendError.message);
+    return { sent: false, reason: 'send-failed', error: sendError.message };
+  }
 
   return { sent: true };
 };
