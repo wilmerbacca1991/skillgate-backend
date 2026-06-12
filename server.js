@@ -60,6 +60,9 @@ const corsOptions = {
 const app = express();
 const server = http.createServer(app);
 
+// Render sits behind a proxy. This lets express-rate-limit read real client IPs safely.
+app.set('trust proxy', 1);
+
 const io = new Server(server, {
   cors: {
     origin(origin, callback) {
