@@ -10,6 +10,8 @@ setRefreshTokenCookie,
 clearRefreshTokenCookie
 } = require('../utils/tokenUtils');
 
+const isBcryptHash = (value) => /^\$2[aby]\$\d{2}\$/.test(String(value || ''));
+
 const toUserResponse = (user) => {
 const normalized = user.toObject ? user.toObject() : user;
 
@@ -67,12 +69,32 @@ const loginUser = async (req, res) => {
 try {
 const { email, password } = req.body;
 
-const user = await User.findOne({ email });
+const normalizedEmail = String(email || '').trim().toLowerCase();
+const candidatePassword = String(password || '');
+
+const user = await User.findOne({ email: normalizedEmail });
 if (!user) {
 return res.status(401).json({ message: 'Invalid credentials' });
 }
 
-const passwordsMatch = await bcrypt.compare(password, user.password);
+if (!user.password || typeof user.password !== 'string') {
+return res.status(401).json({ message: 'Invalid credentials' });
+}
+
+let passwordsMatch = false;
+
+if (isBcryptHash(user.password)) {
+passwordsMatch = await bcrypt.compare(candidatePassword, user.password);
+} else {
+// Backward compatibility for legacy plain-text seeded/test accounts.
+passwordsMatch = candidatePassword === user.password;
+
+if (passwordsMatch) {
+user.password = await bcrypt.hash(candidatePassword, 10);
+await user.save();
+}
+}
+
 if (!passwordsMatch) {
 return res.status(401).json({ message: 'Invalid credentials' });
 }
@@ -87,6 +109,7 @@ message: 'Login successful',
 ...buildAuthResponse(user, accessToken)
 });
 } catch (error) {
+console.error('Login failure:', error.message);
 res.status(500).json({ message: 'Server error during login' });
 }
 };
